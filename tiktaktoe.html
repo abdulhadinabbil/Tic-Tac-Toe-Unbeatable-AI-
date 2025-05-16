@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tic Tac Toe (Unbeatable AI)</title>
+  <style>
+    body {
+      background: #222;
+      color: white;
+      font-family: sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 5px;
+      margin: auto;
+      width: 310px;
+    }
+    .cell {
+      background: #444;
+      font-size: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .cell.taken {
+      pointer-events: none;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 20px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Unbeatable Tic Tac Toe 🤖</h1>
+  <div id="board"></div>
+  <div id="status">Your move: X</div>
+  <button onclick="resetGame()">Reset</button>
+
+  <script>
+    const board = document.getElementById("board");
+    const statusText = document.getElementById("status");
+    let boardState = Array(9).fill(null);
+    let cells = [];
+    let gameOver = false;
+
+    const winPatterns = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
+    ];
+
+    function checkWinner(player) {
+      return winPatterns.some(pattern =>
+        pattern.every(index => boardState[index] === player)
+      );
+    }
+
+    function getAvailableMoves(state) {
+      return state.map((val, idx) => val === null ? idx : null).filter(v => v !== null);
+    }
+
+    function minimax(state, isMaximizing) {
+      if (checkWinner('O')) return { score: 1 };
+      if (checkWinner('X')) return { score: -1 };
+      if (getAvailableMoves(state).length === 0) return { score: 0 };
+
+      let bestMove;
+      if (isMaximizing) {
+        let bestScore = -Infinity;
+        getAvailableMoves(state).forEach(index => {
+          state[index] = 'O';
+          let result = minimax(state, false);
+          state[index] = null;
+          if (result.score > bestScore) {
+            bestScore = result.score;
+            bestMove = index;
+          }
+        });
+        return { score: bestScore, move: bestMove };
+      } else {
+        let bestScore = Infinity;
+        getAvailableMoves(state).forEach(index => {
+          state[index] = 'X';
+          let result = minimax(state, true);
+          state[index] = null;
+          if (result.score < bestScore) {
+            bestScore = result.score;
+            bestMove = index;
+          }
+        });
+        return { score: bestScore, move: bestMove };
+      }
+    }
+
+    function botMove() {
+      if (gameOver) return;
+
+      const { move } = minimax([...boardState], true);
+      boardState[move] = 'O';
+      cells[move].textContent = 'O';
+      cells[move].classList.add('taken');
+
+      if (checkWinner('O')) {
+        statusText.textContent = "Bot wins! 😈";
+        gameOver = true;
+        return;
+      }
+
+      if (getAvailableMoves(boardState).length === 0) {
+        statusText.textContent = "It's a draw! 🤝";
+        gameOver = true;
+        return;
+      }
+
+      statusText.textContent = "Your move: X";
+    }
+
+    function playerMove(index) {
+      if (gameOver || boardState[index]) return;
+
+      boardState[index] = 'X';
+      cells[index].textContent = 'X';
+      cells[index].classList.add('taken');
+
+      if (checkWinner('X')) {
+        statusText.textContent = "You win! 🏆";
+        gameOver = true;
+        return;
+      }
+
+      if (getAvailableMoves(boardState).length === 0) {
+        statusText.textContent = "It's a draw! 🤝";
+        gameOver = true;
+        return;
+      }
+
+      statusText.textContent = "Bot thinking...";
+      setTimeout(botMove, 300);
+    }
+
+    function drawBoard() {
+      board.innerHTML = '';
+      cells = [];
+
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.addEventListener('click', () => playerMove(i));
+        board.appendChild(cell);
+        cells.push(cell);
+      }
+    }
+
+    function resetGame() {
+      boardState = Array(9).fill(null);
+      gameOver = false;
+      drawBoard();
+      statusText.textContent = "Your move: X";
+    }
+
+    drawBoard();
+  </script>
+
+</body>
+</html>
